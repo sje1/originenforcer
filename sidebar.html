@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'">
+
+<style>
+body {
+  background-color: linen;
+  font-family: Helvetica, Arial, Times;
+}
+.hostblock {
+  text-decoration: line-through;
+  color: red;
+}
+.recentblock {
+  text-decoration: line-through;
+  color: red;
+}
+.allowed {
+  color: green;
+}
+.originallowed {
+  color: green;
+}
+
+.promote {
+  color: green;
+  font-size: large;
+  cursor: crosshair;
+}
+.origintick {
+  color: green;
+  font-size: large;
+  cursor: crosshair;
+}
+.demote {
+  color: red;
+  font-size: large;
+  cursor: crosshair;
+}
+.callblockcross {
+  color: red;
+  font-size: large;
+  cursor: crosshair;
+}
+
+#tip {
+  padding-top: 5px;
+}
+#totals {
+  padding-top: 5px;
+}
+#totalsbyhost {
+  padding-top: 5px;
+}
+
+</style>
+</head>
+
+<body style="margin: 2px;">
+
+  <div id="tip"><table><tr><td><img src="icons/icon-48.png" title="I am the ORIGIN ENFORCER! I block all requests to third parties, and restore the power to the user to control third party sharing and surveillance!"></td><td>tip: <span id="tipid"></span></td></tr></table></div>
+
+  <div id="intro"></div>
+
+  <h3><span id="originheader"></span></h3>
+  <div id="originintro"></div>
+  <div><span class="origintick" title="Origin Calls - Always Safe and Good!">&#10003;</span> <span id="origincalls" class="originallowed" title=""></span></div>
+
+  <h3>Allowed for <span id="myhostname"></span></h3>
+  <div id="whitelistedhost"></div>
+
+  <h3>Blocked for <span id="myhostname1"></span></h3>
+  <div id="blocked"></div>
+
+  <h3>Recently blocked for <span id="myhostname2"></h3>
+  <div id="recentblocks"></div>
+
+  <script src="sidebar.js"></script>
+</body>
+
+</html>
