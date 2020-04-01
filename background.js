@@ -25,7 +25,7 @@ function initdata(){
   odata.getwhitelists['wikipedia.org'] = ['wikimedia.org'];
   odata.getwhitelists['amazon.com'] = ['ssl-images-amazon.com'];
   odata.getwhitelists['twitter.com'] = ['twimg.com'];
-  odata.getwhitelists['live.com'] = ['microsoft.com','msecnd.net','office365.com'];
+  odata.getwhitelists['live.com'] = ['microsoft.com','msecnd.net','office365.com','office.net'];
   odata.getwhitelists['microsoft.com'] = ['live.com','akamaized.net','s-microsoft.com'];
   odata.getwhitelists['office.com'] = ['microsoft.com','microsoftonline.com','akamaized.net','msocdn.com'];
   odata.getwhitelists['twitch.tv'] = ['twitchcdn.net','twitchsvc.net','ttvnw.net'];
@@ -140,6 +140,26 @@ function bgHandleMessage(request, sender, sendResponse) {
     browser.storage.local.set(odata);
     sendResponse({ success: true, msg: 'removed ' + urldomain + ' from ' + refdomain, refhost: request.refhost, urlhost: request.urlhost, refdomain:refdomain, urldomain:urldomain });
 
+  } else if(request.type === 'sitepolicy'){  // global site policy for the domain
+    if(!request.refhost) { sendResponse({ success: false, msg: 'refhost missing', odata: odata}); return; }
+    if(!request.urlhost) { sendResponse({ success: false, msg: 'urlhost missing', odata: odata}); return; }
+    var refdomain = getdomain(request.refhost);
+    var urldomain = getdomain(request.urlhost);
+    if(!(odata.hasOwnProperty('gethostsettings'))) odata.gethostsettings = {};
+    if(!(refdomain in odata.gethostsettings)) odata.gethostsettings[refdomain] = {};
+    var index = odata.gethostsettings[refdomain].sitepolicy = request.sitepolicy;
+    browser.storage.local.set(odata);
+    sendResponse({ success: true, msg: 'set site policy to ' + request.sitepolicy + ' for ' + refdomain, refhost: request.refhost, urlhost: request.urlhost, refdomain:refdomain, urldomain:urldomain });
+
+  } else if(request.type === 'runtimereset'){ // clear runtime data for the domain
+    if(!request.refhost) { sendResponse({ success: false, msg: 'urlhost missing', odata: odata}); return; }
+    var domain = getdomain(request.refhost);
+    if(rdata && ('bydomain' in rdata) && (domain in rdata.bydomain)) {
+      delete rdata.bydomain[domain];
+    } else {
+    }
+    sendResponse({ success: true, msg: 'cleared runtime data for ' + domain });
+
   } else if(request.type === 'tabinfo') { // get info for a current tab
     if(!request.url) { sendResponse({ success: false, msg: 'host missing', odata: odata}); return; }
     if(!request.tabId) { sendResponse({ success: false, msg: 'tabId missing', odata: odata}); return; }
@@ -147,7 +167,10 @@ function bgHandleMessage(request, sender, sendResponse) {
     var domain = getdomain(host);
 
     if(!('bydomain' in rdata)) rdata.bydomain = {};
-    if(!(domain in rdata.bydomain)) rdata.bydomain[domain] = {}
+    if(!(domain in rdata.bydomain)) {
+      rdata.bydomain[domain] = {}
+      rdata.bydomain[domain].since = new Date();
+    }
     var c = rdata.bydomain[domain];
 
     var ch = [];
@@ -165,6 +188,14 @@ function bgHandleMessage(request, sender, sendResponse) {
     var wlh = [];
     if(odata && odata.getwhitelists && odata.getwhitelists[domain]) {
       wlh = odata.getwhitelists[domain];
+    }
+    var gs = {};
+    if(odata && odata.gethostsettings && odata.gethostsettings['*']){
+      gs = odata.gethostsettings['*'];
+    }
+    var hs = {};
+    if(odata && odata.gethostsettings && odata.gethostsettings[domain]){
+      hs = odata.gethostsettings[domain];
     }
     var cancelledbyhostcount = 0;
     if(c && c.cancelled) {
@@ -190,7 +221,7 @@ function bgHandleMessage(request, sender, sendResponse) {
     if(!('todomain' in c)) c.todomain = {};
     var hosttohostcounts = c.todomain;
 
-    sendResponse({ success: true, msg: 'found', data: { url: request.url, host: host, domain: domain, tabId: request.tabId, whiteliststar: wls, whitelisthost: wlh, newwlh: newwlh, cancelledbyhost: ch, cancellist: cancellist, blockedByHostCount: cancelledbyhostcount, blockedCount: odata.cancelCount, totalCount: odata.totalCount, totalByHostCount: totalbyhostcount, blockedCookieCount: odata.blockedCookieCount, totalCookieCount: odata.totalCookieCount, blockedCookieByHostCount: cancelledcookiebyhostcount, totalCookieByHostCount: totalcookiebyhostcount, hosttohostcounts: hosttohostcounts }});
+    sendResponse({ success: true, msg: 'found', data: { url: request.url, host: host, domain: domain, tabId: request.tabId, whiteliststar: wls, whitelisthost: wlh, newwlh: newwlh, cancelledbyhost: ch, cancellist: cancellist, blockedByHostCount: cancelledbyhostcount, blockedCount: odata.cancelCount, totalCount: odata.totalCount, totalByHostCount: totalbyhostcount, blockedCookieCount: odata.blockedCookieCount, totalCookieCount: odata.totalCookieCount, blockedCookieByHostCount: cancelledcookiebyhostcount, totalCookieByHostCount: totalcookiebyhostcount, hosttohostcounts: hosttohostcounts, globalsettings: gs, hostsettings: hs, rdatasince: c.since }});
 
   } else {
     sendResponse({ success: false, msg: 'missing type'});
@@ -225,7 +256,10 @@ function beforeSendHeaders(details) {
   // runtime data
   if (typeof rdata === 'undefined') rdata = {};
   if(typeof rdata.bydomain === 'undefined') rdata.bydomain = {};
-  if(!(details.refdomain in rdata.bydomain)) rdata.bydomain[details.refdomain] = {};
+  if(!(details.refdomain in rdata.bydomain)) {
+    rdata.bydomain[details.refdomain] = {};
+    rdata.bydomain[details.refdomain].since = new Date();
+  }
   var c = rdata.bydomain[details.refdomain];
 
   // counts by ref
@@ -250,6 +284,36 @@ function beforeSendHeaders(details) {
 
   if(details.refhost === details.urlhost) {  return; }  // good, full host match
   if(details.refdomain === details.urldomain) {  return; } // good enough, domain matches
+
+  // check global site settings
+  if(odata && odata.gethostsettings){
+    var star = odata.gethostsettings['*'];
+    if(star && star.hasOwnProperty('sitepolicy')){
+       if(star.sitepolicy === 'allowall') { 
+         return; 
+       } else if(star.sitepolicy === 'allowallnocookies') {
+         return donocookies(details, 'global no cookies');
+       }
+    }
+    var host = odata.gethostsettings[details.refhost];
+    if(host && host.hasOwnProperty('sitepolicy')){
+       if(host.sitepolicy === 'allowall') { 
+         return; 
+       } else if(host.sitepolicy === 'allowallnocookies') {
+         return donocookies(details, 'global no cookies');
+       }
+    }
+    if(details.refhost !== details.refdomain) {
+      var domain = odata.gethostsettings[details.refdomain];
+      if(domain && domain.hasOwnProperty('sitepolicy')){
+        if(domain.sitepolicy === 'allowall') {
+          return;
+        } else if(domain.sitepolicy === 'allowallnocookies') {
+          return donocookies(details, 'global no cookies');
+        }
+      }
+    }
+  }
 
   // check whitelists
   if(odata && odata.getwhitelists){
@@ -277,6 +341,46 @@ function beforeSendHeaders(details) {
 
 var lastsave;
 
+function donocookies(details, reason){
+
+  if(!details.requestHeaders) return;
+  if(details.cookieCount == 0) return;
+
+  // global counts
+  if(odata.blockedCookieCount) odata.blockedCookieCount = odata.blockedCookieCount + details.cookieCount;
+  else odata.blockedCookieCount = details.cookieCount;
+
+  // counts by domain
+  if (typeof rdata === 'undefined') rdata = {};
+  if(typeof rdata.bydomain === 'undefined') rdata.bydomain = {};
+  if(!(details.refdomain in rdata.bydomain)) {
+    rdata.bydomain[details.refdomain] = {};
+    rdata.bydomain[details.refdomain].since = new Date();
+  }
+
+  var c = rdata.bydomain[details.refdomain];
+  if(!c.cancelledcookies) c.cancelledcookies = details.cookieCount;
+  else c.cancelledcookies = c.cancelledcookies + details.cookieCount;
+
+  // counts for domain to domain
+  if(!c.todomain) c.todomain = {};
+  if(!(details.urldomain in c.todomain)) c.todomain[details.urldomain] = {};
+  var d = c.todomain[details.urldomain];
+  if(!d.cancelledcookies) d.cancelledcookies = details.cookieCount;
+  else d.cancelledcookies = d.cancelledcookies + details.cookieCount;
+
+  // delete cookie header
+  let index = -1;
+  for (let i=0; i < details.requestHeaders.length; i++) {
+    if (details.requestHeaders[i].name.toLowerCase() === 'cookie') index=i;
+  }
+  if (index!==-1) {
+    details.requestHeaders.splice(index,1);
+  }
+
+  return {requestHeaders: e.requestHeaders};
+}
+
 function docancel(details, reason){
 
     var m = { requestId: details.requestId, reason: reason, type: details.type, method: details.method, url: details.url, referer: details.ref, refhost:details.refhost, refdomain:details.refdomain, tabId: details.tabId, timeStamp: details.timeStamp, urlhost: details.urlhost, urldomain: details.urldomain, cookieCount: details.cookieCount };
@@ -287,6 +391,13 @@ function docancel(details, reason){
 
     if(odata.blockedCookieCount) odata.blockedCookieCount = odata.blockedCookieCount + details.cookieCount;
     else odata.blockedCookieCount = details.cookieCount;
+
+    if (typeof rdata === 'undefined') rdata = {};
+    if(typeof rdata.bydomain === 'undefined') rdata.bydomain = {};
+    if(!(details.refdomain in rdata.bydomain)) {
+      rdata.bydomain[details.refdomain] = {};
+      rdata.bydomain[details.refdomain].since = new Date();
+    }
 
     var c = rdata.bydomain[details.refdomain];
     
@@ -333,8 +444,8 @@ function findHostHeader(details){ return findHeader('Host', details); }
 function findCookieHeader(details) { return findHeader('Cookie', details); }
 function findHeader(headerToFind, details){
   if(!details.requestHeaders) return;
-  for (var header of details.requestHeaders) {
-    if(header.name && header.name === headerToFind) return header.value;
+  for (let header of details.requestHeaders) {
+    if(header.name && header.name.toLowerCase() === headerToFind.toLowerCase()) return header.value;
   }
   return;
 }

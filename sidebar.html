@@ -28,22 +28,20 @@ body {
 .promote {
   color: green;
   font-size: large;
-  cursor: crosshair;
+  cursor: pointer;
 }
 .origintick {
   color: green;
   font-size: large;
-  cursor: crosshair;
 }
 .demote {
   color: red;
   font-size: large;
-  cursor: crosshair;
+  cursor: pointer;
 }
 .callblockcross {
   color: red;
   font-size: large;
-  cursor: crosshair;
 }
 
 #tip {
@@ -61,15 +59,30 @@ body {
 
 <body style="margin: 2px;">
 
-  <div id="tip"><table><tr><td><img src="icons/icon-48.png" title="I am the ORIGIN ENFORCER! I block all requests to third parties, and restore the power to the user to control third party sharing and surveillance!"></td><td>tip: <span id="tipid"></span></td></tr></table></div>
+  <div id="tip"><table><tr><td><img src="icons/icon-48.png" title="I am the ORIGIN ENFORCER! I block all the HIDDEN and BACKGROUND requests to third parties, and restore the power to the user. YOU need to control third party sharing and block the surveillance on the internet! This is both Surveilliance and SPAM."></td><td>tip: <span id="tipid"></span></td></tr></table></div>
 
   <div id="intro"></div>
 
-  <h3><span id="originheader"></span></h3>
-  <div id="originintro"></div>
-  <div><span class="origintick" title="Origin Calls - Always Safe and Good!">&#10003;</span> <span id="origincalls" class="originallowed" title=""></span></div>
+  <h2>For <span id="originheader"></span></h2>
 
-  <h3>Allowed for <span id="myhostname"></span></h3>
+  <div>
+    <input id="event/sitepolicy/enforce" type="radio" name="globalradio" value=""><span title="Manage and Block calls to other sites and thirdparties. These calls are used to track your every move aorund the web, especially faebook and google."> Enforce (recommended)</span>
+    <br>
+    <input id="event/sitepolicy/allowallnocookies" type="radio" name="globalradio" value=""><span title="Allow all calls, but block all Cookies. This is for sites that you don't want to manage the third party calls, but does not have a login, so there should be no Cookies needed. By removing all cookies, this helps stops mass surveilliance, especially facebook and google from tracking your every move. But this is not as good as blocking the calls."> Allow everything except Cookies</span>
+    <br>
+    <input id="event/sitepolicy/allowall" type="radio" name="globalradio" value=""><span title="Turn off enforcing anything for this site. Not recommended. This will just allow all calls and cookies to proceed as normal"> Allow everything</span>
+  </div>
+
+  <div id="originintro" style="margin-top:10px;"></div>
+
+  <h3 title="Calls back the same domain are always allowed, and should be the only calls made. This is called the origin of the website. Same origin callbacks are ok and safe, since they are not sending data and calls to unknown or third party servers">Always allowed</h3>
+  <div>
+  <span class="origintick" title="Origin Calls - Always Safe and Good!">&#10003;</span> <span id="origincalls" class="originallowed" title=""></span>
+  </div>
+
+
+  <div id="enforcepanel" style="display:block; opacity: 1;">
+  <h3>Other Domains Allowed for <span id="myhostname"></span></h3>
   <div id="whitelistedhost"></div>
 
   <h3>Blocked for <span id="myhostname1"></span></h3>
@@ -77,6 +90,15 @@ body {
 
   <h3>Recently blocked for <span id="myhostname2"></h3>
   <div id="recentblocks"></div>
+  </div>
+
+  <div id="safepanel" style="display:none;">
+  <h3>Allowed for <span id="myhostname3"></span></h3>
+  <div id="recenthosts"></div>
+
+  <h3>Recent Calls for <span id="myhostname4"></h3>
+  <div id="recent"></div>
+  </div>
 
   <script src="sidebar.js"></script>
 </body>
